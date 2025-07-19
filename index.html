@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Golden Cafe Billing</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    body.light-mode {
+      background-color: #fff8f0;
+      color: #2c3e50;
+    }
+    body.dark-mode {
+      background-color: #2c3e50;
+      color: #ecf0f1;
+    }
+    h1 {
+      text-align: center;
+      color: #d35400;
+      margin-bottom: 20px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+    .menu-left, .menu-right {
+      flex: 1 1 300px;
+      padding: 20px;
+      border: 2px solid #d35400;
+      border-radius: 10px;
+      background: #fff;
+    }
+    body.dark-mode .menu-left, body.dark-mode .menu-right {
+      background: #34495e;
+      border-color: #f39c12;
+    }
+    .form-group {
+      margin: 10px 0;
+    }
+    label {
+      display: inline-block;
+      width: 180px;
+    }
+    input[type="number"], input[type="text"] {
+      padding: 5px;
+      width: 100px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .generate-btn { background: #27ae60; color: white; }
+    .reset-btn { background: #e74c3c; color: white; }
+    .theme-btn { background: #8e44ad; color: white; }
+    .print-btn { background: #2980b9; color: white; }
+    .reset-counter-btn { background: #c0392b; color: white; }
+    .admin-btn { background: #f1c40f; color: black; }
+    #invoice {
+      max-width: 700px;
+      margin: 30px auto;
+      padding: 20px;
+      border: 2px solid #d35400;
+      border-radius: 10px;
+      background: #fff;
+      display: none;
+      font-family: 'Courier New', Courier, monospace;
+    }
+    body.dark-mode #invoice {
+      background: #34495e;
+      border-color: #f39c12;
+      color: #ecf0f1;
+    }
+    .total-preview {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-top: 10px;
+      color: #e67e22;
+    }
+    .form-top {
+      max-width: 600px;
+      margin: 0 auto 20px auto;
+      padding: 15px;
+      border: 2px solid #d35400;
+      border-radius: 10px;
+      background: #fff;
+    }
+    body.dark-mode .form-top {
+      background: #34495e;
+      border-color: #f39c12;
+    }
+    @media (max-width: 600px) {
+      .container {
+        flex-direction: column;
+      }
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      text-align: left;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 400px;
+      max-width: 90%;
+    }
+    body.dark-mode .modal-content {
+      background: #34495e;
+      color: #ecf0f1;
+    }
+    .modal-content input, .modal-content select {
+      margin: 10px 0;
+      padding: 5px;
+      width: 100%;
+    }
+    .modal-content button {
+      margin: 5px;
+    }
+    .close-btn {
+      background: #e74c3c;
+      color: white;
+    }
+  </style>
+</head>
+<body class="light-mode">
+  <h1>Golden Cafe - Billing System</h1>
+
+  <div style="text-align:center">
+    <button class="theme-btn" onclick="toggleTheme()">Toggle Theme</button>
+    <button class="reset-counter-btn" onclick="resetInvoiceCounter()">Reset Invoice Counter</button>
+    <button class="admin-btn" onclick="openAdminModal()">Admin Mode</button>
+  </div>
+
+  <div class="form-top">
+    <div class="form-group"><label>Customer Name</label><input type="text" id="customer"></div>
+    <div class="form-group"><label>Discount (₹)</label><input type="number" id="discount" value="0"></div>
+  </div>
+
+  <div class="container">
+    <div class="menu-left">
+      <div class="form-group"><label>Pizza (100)</label><input type="number" id="pizza" value="0"></div>
+      <div class="form-group"><label>Dhokla (50)</label><input type="number" id="dhokla" value="0"></div>
+      <div class="form-group"><label>Pasta (200)</label><input type="number" id="pasta" value="0"></div>
+      <div class="form-group"><label>Coldrink (50)</label><input type="number" id="coldrink" value="0"></div>
+      <div class="form-group"><label>Sandwich (100)</label><input type="number" id="sandwich" value="0"></div>
+      <div class="form-group"><label>Thepla (30)</label><input type="number" id="thepla" value="0"></div>
+      <div class="form-group"><label>Khamani (70)</label><input type="number" id="khamani" value="0"></div>
+      <div class="form-group"><label>Gulab Jamun (50)</label><input type="number" id="gulabjamun" value="0"></div>
+      <div class="form-group"><label>Rasgulla (90)</label><input type="number" id="rasgulla" value="0"></div>
+    </div>
+    <div class="menu-right">
+      <div class="form-group"><label>Tea (100)</label><input type="number" id="tea" value="0"></div>
+      <div class="form-group"><label>Vada (80)</label><input type="number" id="vada" value="0"></div>
+      <div class="form-group"><label>Locho (100)</label><input type="number" id="locho" value="0"></div>
+      <div class="form-group"><label>Khaman (50)</label><input type="number" id="khaman" value="0"></div>
+      <div class="form-group"><label>Kachori (50)</label><input type="number" id="kachori" value="0"></div>
+      <div class="form-group"><label>Ice Cream (100)</label><input type="number" id="icecream" value="0"></div>
+      <div class="form-group"><label>Popcorn (50)</label><input type="number" id="popcorn" value="0"></div>
+      <div class="form-group"><label>Cheese Popcorn (100)</label><input type="number" id="cheesepopcorn" value="0"></div>
+      <div class="form-group"><label>Caramel Popcorn (300)</label><input type="number" id="caramelpopcorn" value="0"></div>
+      <button class="generate-btn" onclick="generateInvoice()">Generate Invoice</button>
+      <button class="reset-btn" onclick="resetForm()">Reset</button>
+      <button class="print-btn" onclick="printInvoice()">Print Invoice</button>
+    </div>
+  </div>
+
+  <div class="total-preview" id="liveTotal">Total: ₹0.00</div>
+  <div id="invoice"></div>
+
+  <div id="adminModal" class="modal">
+    <div class="modal-content">
+      <h2>Admin Mode</h2>
+      <input type="password" id="adminPassword" placeholder="Enter Password">
+      <div id="adminContent" style="display:none;">
+        <h3>Manage Items</h3>
+        <input type="text" id="newItemName" placeholder="New Item Name">
+        <input type="number" id="newItemPrice" placeholder="Price (₹)">
+        <button onclick="addItem()">Add Item</button>
+        <h3>Edit/Delete Items</h3>
+        <select id="itemSelect"></select>
+        <input type="number" id="editItemPrice" placeholder="New Price (₹)">
+        <button onclick="updateItemPrice()">Update Price</button>
+        <button class="close-btn" onclick="deleteItem()">Delete Item</button>
+        <h3>Edit Tax Rate</h3>
+        <input type="number" id="newTaxRate" placeholder="Tax Rate (%)" step="0.1">
+        <button onclick="updateTaxRate()">Update Tax Rate</button>
+      </div>
+      <button class="close-btn" onclick="closeAdminModal()">Close</button>
+      <button onclick="verifyPassword()">Login</button>
+    </div>
+  </div>
+
+  <script>
+    let items = {
+      pizza: 100, dhokla: 50, pasta: 200, coldrink: 50,
+      sandwich: 100, thepla: 30, tea: 100, vada: 80,
+      locho: 100, khaman: 50, khamani: 70, gulabjamun: 50,
+      rasgulla: 90, kachori: 50, icecream: 100, popcorn: 50,
+      cheesepopcorn: 100, caramelpopcorn: 300
+    };
+    let taxRate = 0.05;
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark-mode");
+      document.body.classList.toggle("light-mode");
+    }
+
+    function resetForm() {
+      document.querySelectorAll('input[type="number"]').forEach(i => i.value = 0);
+      document.getElementById("customer").value = '';
+      document.getElementById("invoice").style.display = 'none';
+      updateLiveTotal();
+    }
+
+    function resetInvoiceCounter() {
+      localStorage.setItem('invoiceNo', '1');
+      alert("Invoice counter reset to 1");
+    }
+
+    function updateLiveTotal() {
+      let subtotal = 0;
+      for (const id in items) {
+        subtotal += parseInt(document.getElementById(id).value || 0) * items[id];
+      }
+      const tax = subtotal * taxRate;
+      const discount = parseInt(document.getElementById("discount").value || 0);
+      const finalTotal = Math.max(0, subtotal + tax - discount);
+      document.getElementById("liveTotal").textContent = `Total: ₹${finalTotal.toFixed(2)}`;
+    }
+
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', updateLiveTotal);
+    });
+
+    function generateInvoice() {
+      const invoiceNo = parseInt(localStorage.getItem("invoiceNo") || "1");
+      localStorage.setItem("invoiceNo", invoiceNo + 1);
+
+      let invoiceHTML = `
+        <div style="text-align:center;">
+          <h2 style="margin-bottom: 5px;">🧾 Golden Cafe Invoice #${invoiceNo}</h2>
+          <small style="font-style: italic; color: #888;">"Fresh *"Fresh Taste, Best Service"</small>
+        </div>
+        <hr>
+      `;
+
+      const customer = document.getElementById("customer").value || "Guest";
+      const timestamp = new Date().toLocaleString();
+      invoiceHTML += `
+        <p><strong>Customer:</strong> ${customer}<br>
+        <strong>Date:</strong> ${timestamp}</p>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Qty</th><th>Rate</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+      `;
+
+      let subtotal = 0, totalItems = 0;
+      for (const id in items) {
+        const qty = parseInt(document.getElementById(id).value || 0);
+        if (qty > 0) {
+          const itemTotal = qty * items[id];
+          const label = id.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+          invoiceHTML += `
+            <tr>
+              <td>${label}</td>
+              <td style="text-align:center;">${qty}</td>
+              <td style="text-align:center;">₹${items[id]}</td>
+              <td style="text-align:right;">₹${itemTotal.toFixed(2)}</td>
+            </tr>
+          `;
+          subtotal += itemTotal;
+          totalItems += qty;
+        }
+      }
+
+      const cgst = subtotal * (taxRate / 2);
+      const sgst = subtotal * (taxRate / 2);
+      const discount = parseInt(document.getElementById("discount").value || 0);
+      const total = Math.max(0, subtotal + cgst + sgst - discount);
+
+      invoiceHTML += `
+          </tbody>
+        </table>
+        <hr>
+        <p><strong>Subtotal:</strong> ₹${subtotal.toFixed(2)}</p>
+        <p><strong>CGST ${taxRate * 50}%:</strong> ₹${cgst.toFixed(2)}</p>
+        <p><strong>SGST ${taxRate * 50}%:</strong> ₹${sgst.toFixed(2)}</p>
+        <p><strong>Discount:</strong> -₹${discount.toFixed(2)}</p>
+        <h3 style="color:#e74c3c;">Grand Total: ₹${total.toFixed(2)}</h3>
+        <hr>
+        <div style="margin-top: 20px;">
+          <p style="font-style: italic; color: green; text-align:center;">Thank you for visiting Golden Cafe! ☕</p>
+          <p style="font-size: 0.9rem; text-align:center;">
+            📍 <strong>Address:</strong> Ugat Bhesan Road, Surat 395005<br>
+            📞 <strong>Contact:</strong> 9339201164<br>
+            📧 <strong>Email:</strong> sparklinkcommerce@gmail.com
+          </p>
+        </div>
+      `;
+
+      const invoice = document.getElementById("invoice");
+      invoice.innerHTML = invoiceHTML;
+      invoice.style.display = 'block';
+    }
+
+    function printInvoice() {
+      const invoiceContent = document.getElementById('invoice').innerHTML;
+      if (!invoiceContent.trim()) {
+        alert("Please generate the invoice first.");
+        return;
+      }
+      const win = window.open('', '', 'height=600,width=800');
+      win.document.write('<html><head><title>Print Invoice</title></head><body>');
+      win.document.write(invoiceContent);
+      win.document.write('</body></html>');
+      win.document.close();
+      win.print();
+    }
+
+    function openAdminModal() {
+      document.getElementById('adminModal').style.display = 'flex';
+      document.getElementById('adminPassword').focus();
+      document.getElementById('adminContent').style.display = 'none';
+      document.getElementById('adminPassword').value = '';
+    }
+
+    function closeAdminModal() {
+      document.getElementById('adminModal').style.display = 'none';
+    }
+
+    function verifyPassword() {
+      const password = document.getElementById('adminPassword').value;
+      if (password === '1234') {
+        document.getElementById('adminContent').style.display = 'block';
+        document.getElementById('adminPassword').style.display = 'none';
+        updateItemSelect();
+      } else {
+        alert('Incorrect password');
+        document.getElementById('adminPassword').value = '';
+      }
+    }
+
+    function updateItemSelect() {
+      const select = document.getElementById('itemSelect');
+      select.innerHTML = '';
+      for (const id in items) {
+        const label = id.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+        select.innerHTML += `<option value="${id}">${label} (₹${items[id]})</option>`;
+      }
+    }
+
+    function addItem() {
+      const name = document.getElementById('newItemName').value.trim();
+      const price = parseFloat(document.getElementById('newItemPrice').value);
+      if (!name || isNaN(price) || price <= 0) {
+        alert('Please enter a valid item name and price.');
+        return;
+      }
+      const id = name.toLowerCase().replace(/\s+/g, '');
+      if (items[id]) {
+        alert('Item already exists.');
+        return;
+      }
+      items[id] = price;
+      const div = document.createElement('div');
+      div.className = 'form-group';
+      div.innerHTML = `<label>${name} (${price})</label><input type="number" id="${id}" value="0">`;
+      document.querySelector('.menu-left').appendChild(div);
+      document.getElementById(id).addEventListener('input', updateLiveTotal);
+      updateItemSelect();
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemPrice').value = '';
+      alert(`${name} added successfully.`);
+    }
+
+    function updateItemPrice() {
+      const id = document.getElementById('itemSelect').value;
+      const price = parseFloat(document.getElementById('editItemPrice').value);
+      if (isNaN(price) || price <= 0) {
+        alert('Please enter a valid price.');
+        return;
+      }
+      items[id] = price;
+      const label = document.querySelector(`label[for="${id}"]`);
+      const name = label.textContent.split(' (')[0];
+      label.textContent = `${name} (${price})`;
+      updateItemSelect();
+      updateLiveTotal();
+      document.getElementById('editItemPrice').value = '';
+      alert('Price updated successfully.');
+    }
+
+    function deleteItem() {
+      const id = document.getElementById('itemSelect').value;
+      const label = document.querySelector(`label[for="${id}"]`).textContent.split(' (')[0];
+      if (confirm(`Are you sure you want to delete ${label}?`)) {
+        delete items[id];
+        document.getElementById(id).parentElement.remove();
+        updateItemSelect();
+        updateLiveTotal();
+        alert(`${label} deleted successfully.`);
+      }
+    }
+
+    function updateTaxRate() {
+      const newRate = parseFloat(document.getElementById('newTaxRate').value) / 100;
+      if (isNaN(newRate) || newRate < 0) {
+        alert('Please enter a valid tax rate.');
+        return;
+      }
+      taxRate = newRate;
+      updateLiveTotal();
+      document.getElementById('newTaxRate').value = '';
+      alert(`Tax rate updated to ${newRate * 100}%.`);
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (document.activeElement.tagName === "INPUT") {
+        if (["w", "s"].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+          const input = document.activeElement;
+          const step = e.key.toLowerCase() === "w" ? 1 : -1;
+          if (input.type === "number") {
+            input.value = Math.max(0, parseInt(input.value || 0) + step);
+            updateLiveTotal();
+          }
+        }
+      }
+      const inputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]'));
+      const index = inputs.indexOf(document.activeElement);
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (document.getElementById('adminModal').style.display === 'flex' && 
+            document.activeElement.id === 'adminPassword') {
+          verifyPassword();
+        } else {
+          generateInvoice();
+        }
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (index >= 0 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (index > 0) {
+          inputs[index - 1].focus();
+        }
+      }
+      if (e.key === "9") {
+        e.preventDefault();
+        printInvoice();
+      }
+    });
+  </script>
+</body>
+</html>
